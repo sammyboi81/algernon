@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "algernon-mcp"
+version = "0.1.0"
+description = "Provider-agnostic fleet orchestration for AI agents: dispatch tightly-scoped parallel sub-tasks to cheap workers on your own LLM key, collect the results, and stay free to think."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [{ name = "ZagAIrot Technologies LLC" }]
+keywords = ["mcp", "model-context-protocol", "ai-agents", "orchestration", "parallel", "fan-out", "sub-agents", "claude", "codex", "llm", "provider-agnostic", "self-contained"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = ["mcp>=2.0.0", "httpx>=0.27"]
+
+[project.urls]
+Homepage = "https://dondatabrain.com"
+Repository = "https://github.com/sammyboi81/algernon"
+"Issue Tracker" = "https://github.com/sammyboi81/algernon/issues"
+"License" = "https://github.com/sammyboi81/algernon/blob/main/LICENSE"
+"Twin (ArkHive)" = "https://github.com/sammyboi81/arkhive"
+
+[project.scripts]
+algernon = "server:main_sync"
+algernon-mcp = "server:main_sync"
+
+[tool.setuptools]
+py-modules = ["server", "core"]

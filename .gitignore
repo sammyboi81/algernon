@@ -1,0 +1,11 @@
+*.egg-info/
+*.pyc
+.apikey
+.env
+.venv/
+__pycache__/
+data/
+data/*.db
+data/*.db-*
+dist/
+build/
