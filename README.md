@@ -9,6 +9,49 @@ assistant — Claude, Codex, or any MCP client — **dispatch tightly-scoped
 parallel sub-tasks to a fleet of cheap workers, collect the results, and stay
 free to think.** Orchestrate a fleet, spend fewer tokens, keep the thread.
 
+## What you get
+
+- **Your expensive model stops doing the grunt work.** The big, costly
+  orchestrator hands the repetitive sub-tasks to a fleet of small, cheap
+  workers and just integrates the results. It stops *generating* the grind and
+  stops holding the whole job in one context.
+- **Each worker sees only its slice.** Tight scoping means a worker can be a
+  small, fast, inexpensive model — many running at once.
+- **Bring your own key. No telemetry, no account, no lock-in.** The fleet runs
+  on whatever provider you already pay for — or, for free, on a local model.
+
+### Verify it yourself — one command, no paid key
+
+The frugality claim is not a slogan; it's a benchmark you can run. It defaults
+to a **free local model** (ollama, `llama3.2:3b`) so anyone can reproduce it:
+
+```bash
+git clone https://github.com/sammyboi81/algernon && cd algernon
+./scripts/verify.sh          # or:  python -m benchmark
+```
+
+It runs the SAME batch of sub-tasks two ways — the orchestrator doing it all
+itself (SOLO) vs. Algernon fanning it out — and prints the **real measured**
+tokens and wall-clock for each. Representative output (`llama3.2:3b`, 6 tasks):
+
+```
+metric                                  SOLO (do-it-itself)  ALGERNON fan-out
+--------------------------------------------------------------------------
+LLM calls                                              1                 6
+input tokens                                         136               225
+output tokens (the generation grind)                 282               279
+total tokens                                         418               504
+wall-clock seconds                                 42.11             34.49
+```
+
+The honest reading: the orchestrator generated **282 output tokens itself** in
+SOLO and **0** with Algernon — the cheap fleet produced those instead. Each
+worker read only ~38 input tokens vs. the orchestrator swallowing all 136 at
+once. The trade-off is stated too: fan-out spent **+21% more total tokens**
+(each worker re-pays a little prompt overhead). You trade some total tokens to
+keep the expensive mind free. Wall-clock varies with how parallel your fleet
+is; numbers vary slightly run-to-run. Run it and see your own.
+
 ## Curing Algernon
 
 In *Flowers for Algernon* the tragedy is a mind that **fades** — it gets sharp,
@@ -75,13 +118,23 @@ cheap tier (`claude-haiku-4-5` / `gpt-4o-mini`); override it with the env var
 above or per call with the tool's `model` argument. A cheap fleet is the whole
 point.
 
-## Install in one command
+## Install
+
+Once published to PyPI, install in one command:
 
 ```bash
 python -m pip install algernon-mcp
 ```
 
-The installed MCP command is `algernon`.
+Until the PyPI release lands, install straight from source (identical result):
+
+```bash
+git clone https://github.com/sammyboi81/algernon && cd algernon
+python -m pip install .
+```
+
+Either way the installed MCP command is `algernon`. Algernon runs on the
+`mcp` 1.x SDK (`mcp>=1.0.0,<2.0.0`) plus `httpx` — nothing else.
 
 ## Connect an MCP client
 

@@ -86,7 +86,11 @@ async def _llm(prompt: str, system: str | None = None, model: str | None = None)
                 for block in data.get("content", [])
                 if block.get("type") == "text"
             )
-            return {"text": text}
+            u = data.get("usage") or {}
+            return {"text": text, "usage": {
+                "input_tokens": u.get("input_tokens"),
+                "output_tokens": u.get("output_tokens"),
+            }}
 
         if provider == "openai":
             key = os.environ["OPENAI_API_KEY"]
@@ -110,7 +114,11 @@ async def _llm(prompt: str, system: str | None = None, model: str | None = None)
                 return {"error": f"openai {r.status_code}: {r.text[:500]}"}
             data = r.json()
             text = data["choices"][0]["message"].get("content", "") or ""
-            return {"text": text}
+            u = data.get("usage") or {}
+            return {"text": text, "usage": {
+                "input_tokens": u.get("prompt_tokens"),
+                "output_tokens": u.get("completion_tokens"),
+            }}
 
         return {
             "error": "no LLM key found — set ANTHROPIC_API_KEY or OPENAI_API_KEY "
@@ -173,7 +181,10 @@ async def dispatch(tasks: list[dict], model: str | None = None, max_parallel: in
             out = await _llm(prompt, model=model)
         if "error" in out:
             return {"id": tid, "result": None, "error": out["error"]}
-        return {"id": tid, "result": out.get("text", ""), "error": None}
+        # usage (input/output token counts) is passed straight through when the
+        # provider reports it — so callers can see exactly what the fleet spent.
+        return {"id": tid, "result": out.get("text", ""), "error": None,
+                "usage": out.get("usage")}
 
     return await asyncio.gather(*(_run(t) for t in tasks))
 
