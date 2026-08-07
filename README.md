@@ -219,6 +219,24 @@ only to your chosen provider.
 - [Source](https://github.com/sammyboi81/algernon)
 - [Issues](https://github.com/sammyboi81/algernon/issues)
 - [Twin: ArkHive](https://github.com/sammyboi81/arkhive)
+
+## Beyond self-hosting — the paid tier
+
+The MCP server on this page is free forever (Apache-2.0, self-host, no telemetry).
+When you want more than DIY:
+
+- **Hosted ArkHive** — one URL, no install, no key:
+  `https://arkhive.dondatabrain.com/mcp` (add it to Claude Code with
+  `claude mcp add --transport http arkhive https://arkhive.dondatabrain.com/mcp`).
+- **Custom AI agent, built for you** — a working MCP agent wired into your
+  Claude or ChatGPT in one call, done-for-you by the founder:
+  [$700 flat](https://inboxaxe.com/offer_agent.html).
+- **ArkHive Enterprise** — hand-delivered install + pilot on your own server,
+  from $2,500: [sam@inboxaxe.com](mailto:sam@inboxaxe.com?subject=ArkHive%20Enterprise%20install).
+
+Built by the team behind [InboxAxe](https://inboxaxe.com) — the governed AI
+marketing platform where nothing sends without your yes.
+
 - [Website](https://dondatabrain.com)
 - [Apache-2.0 license](./LICENSE)
 
