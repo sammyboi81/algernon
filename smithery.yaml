@@ -1,46 +1,49 @@
-# Smithery configuration — https://smithery.ai/docs
-# Algernon MCP: self-contained stdio server installed from PyPI.
-# You bring your own LLM key; Algernon brings the orchestration.
-startCommand:
-  type: stdio
-  configSchema:
-    type: object
-    properties:
-      ANTHROPIC_API_KEY:
-        type: string
-        title: Anthropic API Key
-        description: Your Anthropic key. Sub-agents run on your own key. Provide this OR OPENAI_API_KEY.
-      OPENAI_API_KEY:
-        type: string
-        title: OpenAI-compatible API Key
-        description: Your OpenAI-compatible key. Provide this OR ANTHROPIC_API_KEY.
-      OPENAI_BASE_URL:
-        type: string
-        title: OpenAI-compatible Base URL
-        description: Endpoint for the OpenAI-compatible API (e.g. https://api.openai.com/v1). Used with OPENAI_API_KEY.
-      ANTHROPIC_MODEL:
-        type: string
-        title: Anthropic Worker Model
-        description: Optional. The small, cheap Anthropic model each fleet worker runs (default claude-haiku-4-5).
-      OPENAI_MODEL:
-        type: string
-        title: OpenAI Worker Model
-        description: Optional. The small, cheap OpenAI-compatible model each fleet worker runs (default gpt-4o-mini).
-    anyOf:
-      - required: ["ANTHROPIC_API_KEY"]
-      - required: ["OPENAI_API_KEY"]
-  commandFunction: |-
-    (config) => ({
-      command: "algernon",
-      args: [],
-      env: {
-        ANTHROPIC_API_KEY: config.ANTHROPIC_API_KEY,
-        OPENAI_API_KEY: config.OPENAI_API_KEY,
-        OPENAI_BASE_URL: config.OPENAI_BASE_URL,
-        ANTHROPIC_MODEL: config.ANTHROPIC_MODEL,
-        OPENAI_MODEL: config.OPENAI_MODEL
-      }
-    })
+# Smithery configuration — https://smithery.ai/docs/build/project-config
+#
+# Algernon MCP: a self-contained, provider-agnostic fleet-orchestration
+# server. Bring your own LLM key; Algernon brings the orchestration.
+# Apache-2.0. (c) ZagAIrot Technologies LLC.
+#
+# Custom-container deploy: Smithery builds the image from the repo Dockerfile
+# and hosts it. The user supplies their own LLM provider key via the session
+# configSchema below — sub-agents run on the user's key, never ours.
+runtime: "container"
+
 build:
-  dockerfile: Dockerfile
-  dockerBuildPath: .
+  dockerfile: "Dockerfile"
+  dockerBuildPath: "."
+
+startCommand:
+  type: "http"
+  # JSON Schema for per-session config the user supplies in the Smithery UI.
+  # Provide an Anthropic key OR an OpenAI-compatible key. If both are set,
+  # Anthropic is used. Worker-model fields are optional (cheap-tier defaults).
+  configSchema:
+    type: "object"
+    properties:
+      anthropicApiKey:
+        type: "string"
+        title: "Anthropic API Key"
+        description: "Your Anthropic key. The cheap fleet workers run on this key. Provide this OR an OpenAI-compatible key."
+      openaiApiKey:
+        type: "string"
+        title: "OpenAI-compatible API Key"
+        description: "Your OpenAI-compatible key (OpenAI or any OpenAI-shaped endpoint). Provide this OR an Anthropic key."
+      openaiBaseUrl:
+        type: "string"
+        title: "OpenAI-compatible Base URL"
+        description: "Endpoint for the OpenAI-compatible API, e.g. https://api.openai.com/v1. Used with the OpenAI-compatible key."
+      anthropicModel:
+        type: "string"
+        title: "Anthropic Worker Model"
+        description: "Optional. The small, cheap Anthropic model each fleet worker runs. Default: claude-haiku-4-5."
+      openaiModel:
+        type: "string"
+        title: "OpenAI Worker Model"
+        description: "Optional. The small, cheap OpenAI-compatible model each fleet worker runs. Default: gpt-4o-mini."
+    anyOf:
+      - required: ["anthropicApiKey"]
+      - required: ["openaiApiKey"]
+  exampleConfig:
+    anthropicApiKey: "sk-ant-your-key-here"
+    anthropicModel: "claude-haiku-4-5"
