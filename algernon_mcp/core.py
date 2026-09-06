@@ -40,13 +40,45 @@ DEFAULT_MAX_TOKENS = int(os.environ.get("ALGERNON_MAX_TOKENS", "2048"))
 HTTP_TIMEOUT = float(os.environ.get("ALGERNON_HTTP_TIMEOUT", "120"))
 
 
+OLLAMA_URL = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+_OLLAMA_PROBE: dict[str, bool] = {}
+
+
+def _ollama_up() -> bool:
+    """Probe a local Ollama once per process (1.5s timeout) so no-key users get a free fleet."""
+    if "up" not in _OLLAMA_PROBE:
+        try:
+            import httpx
+            _OLLAMA_PROBE["up"] = httpx.get(f"{OLLAMA_URL.rstrip('/')}/api/tags", timeout=1.5).status_code == 200
+        except Exception:  # noqa: BLE001
+            _OLLAMA_PROBE["up"] = False
+    return _OLLAMA_PROBE["up"]
+
+
 def _provider() -> str:
-    """Pick the provider from whatever key the caller supplied."""
+    """Pick the provider: explicit ALGERNON_PROVIDER, else whichever key exists, else a local Ollama."""
+    forced = (os.environ.get("ALGERNON_PROVIDER") or "").lower()
+    if forced in ("anthropic", "openai", "ollama"):
+        return forced
     if os.environ.get("ANTHROPIC_API_KEY"):
         return "anthropic"
     if os.environ.get("OPENAI_API_KEY"):
         return "openai"
+    if _ollama_up():
+        return "ollama"
     return "none"
+
+
+def describe_provider() -> dict:
+    """What the fleet will run on right now (for the algernon_doctor tool)."""
+    p = _provider()
+    if p == "anthropic":
+        return {"provider": p, "model": DEFAULT_ANTHROPIC_MODEL, "endpoint": ANTHROPIC_URL, "why": "ANTHROPIC_API_KEY is set"}
+    if p == "openai":
+        return {"provider": p, "model": DEFAULT_OPENAI_MODEL, "endpoint": os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"), "why": "OPENAI_API_KEY is set"}
+    if p == "ollama":
+        return {"provider": p, "model": os.environ.get("OLLAMA_MODEL", os.environ.get("OPENAI_MODEL", "llama3.2:3b")), "endpoint": f"{OLLAMA_URL}/v1", "why": "no key set; local Ollama detected — free fleet"}
+    return {"provider": "none", "model": None, "endpoint": None, "why": f"no ANTHROPIC_API_KEY / OPENAI_API_KEY and no Ollama at {OLLAMA_URL}. Set a key, or install Ollama and run: ollama pull llama3.2:3b"}
 
 
 async def _llm(prompt: str, system: str | None = None, model: str | None = None) -> dict:
@@ -92,9 +124,14 @@ async def _llm(prompt: str, system: str | None = None, model: str | None = None)
                 "output_tokens": u.get("output_tokens"),
             }}
 
-        if provider == "openai":
-            key = os.environ["OPENAI_API_KEY"]
-            base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+        if provider in ("openai", "ollama"):
+            if provider == "ollama":
+                key = "ollama"
+                base = f"{OLLAMA_URL.rstrip('/')}/v1"
+                model = model or os.environ.get("OLLAMA_MODEL", os.environ.get("OPENAI_MODEL", "llama3.2:3b"))
+            else:
+                key = os.environ["OPENAI_API_KEY"]
+                base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
             messages = []
             if system:
                 messages.append({"role": "system", "content": system})
@@ -120,10 +157,7 @@ async def _llm(prompt: str, system: str | None = None, model: str | None = None)
                 "output_tokens": u.get("completion_tokens"),
             }}
 
-        return {
-            "error": "no LLM key found — set ANTHROPIC_API_KEY or OPENAI_API_KEY "
-                     "(the fleet runs on YOUR key)."
-        }
+        return {"error": describe_provider()["why"]}
     except Exception as exc:  # noqa: BLE001 — deliberately swallow everything
         return {"error": f"{type(exc).__name__}: {exc}"}
 

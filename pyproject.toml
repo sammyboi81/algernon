@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "algernon-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "Provider-agnostic fleet orchestration for AI agents: dispatch tightly-scoped parallel sub-tasks to cheap workers on your own LLM key, collect the results, and stay free to think."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -32,8 +32,8 @@ Repository = "https://github.com/sammyboi81/algernon"
 "Twin (ArkHive)" = "https://github.com/sammyboi81/arkhive"
 
 [project.scripts]
-algernon = "server:main_sync"
-algernon-mcp = "server:main_sync"
+algernon = "algernon_mcp.server:main_sync"
+algernon-mcp = "algernon_mcp.server:main_sync"
 
 [tool.setuptools]
-py-modules = ["server", "core"]
+packages = ["algernon_mcp"]

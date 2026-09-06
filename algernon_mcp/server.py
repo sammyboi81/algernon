@@ -28,8 +28,7 @@ from mcp.server.stdio import stdio_server
 import mcp.types as types
 
 # Import the pure engine (no MCP deps -> independently testable).
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import core  # noqa: E402
+from . import core  # noqa: E402
 
 app = Server("algernon-mcp")
 
@@ -37,6 +36,15 @@ app = Server("algernon-mcp")
 @app.list_tools()
 async def list_tools():
     return [
+        types.Tool(
+            name="algernon_doctor",
+            description=(
+                "Which provider/model the fleet will run on right now and why (Anthropic key, "
+                "OpenAI-compatible key, or a free local Ollama auto-detected). Call this first if a "
+                "dispatch returns an error."
+            ),
+            inputSchema={"type": "object", "properties": {}},
+        ),
         types.Tool(
             name="algernon_plan",
             description=(
@@ -110,7 +118,9 @@ async def list_tools():
 async def call_tool(name, arguments):
     a = arguments or {}
     try:
-        if name == "algernon_plan":
+        if name == "algernon_doctor":
+            out = core.describe_provider()
+        elif name == "algernon_plan":
             tasks = await core.plan(
                 a.get("goal", ""),
                 k=int(a.get("k", 4)),

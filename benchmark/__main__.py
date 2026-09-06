@@ -55,7 +55,7 @@ if not os.environ.get("ANTHROPIC_API_KEY") and not os.environ.get("OPENAI_API_KE
 
 # import the REAL engine (same code the MCP server calls) AFTER env is set
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import core  # noqa: E402
+from algernon_mcp import core  # noqa: E402
 
 N = int(os.environ.get("ALG_BENCH_N", "6"))
 
