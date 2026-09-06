@@ -30,6 +30,31 @@ import mcp.types as types
 # Import the pure engine (no MCP deps -> independently testable).
 from . import core  # noqa: E402
 
+
+
+def _register_for_v2(email: str | None, product: str) -> dict:
+    """Opt-in: request a 14-day v2 trial key. Sends ONLY the email the user typed. No email, nothing sent."""
+    info = {
+        "free_tier": "everything you use today stays free and open (Apache-2.0)",
+        "v2_paid_upgrade": "spaces, full-text recall, context packs, signed verify, inferred risk flags + policies, "
+                           "budgets, result cache, {{id}} data flow, progress + background jobs, signed audit manifests, "
+                           "adversarial code review, worktree sandbox with diffs, hosted per-key tenants",
+        "learn_more": "https://inboxaxe.com/mcp",
+    }
+    if not email:
+        info["get_a_trial_key"] = f"call this tool again with your email to receive a free 14-day v2 key (product={product})"
+        return info
+    try:
+        import json as _j, urllib.request as _u
+        req = _u.Request("https://inboxaxe.com/api/v2/mcp/trial", method="POST",
+                         data=_j.dumps({"email": email, "product": product, "source": f"{product} upgrade tool"}).encode(),
+                         headers={"Content-Type": "application/json"})
+        with _u.urlopen(req, timeout=10) as r:
+            info["trial"] = _j.loads(r.read().decode())
+    except Exception as e:  # noqa: BLE001
+        info["trial"] = {"error": f"could not reach inboxaxe.com ({type(e).__name__}) — email sam@inboxaxe.com for a key"}
+    return info
+
 app = Server("algernon-mcp")
 
 
@@ -44,6 +69,11 @@ async def list_tools():
                 "dispatch returns an error."
             ),
             inputSchema={"type": "object", "properties": {}},
+        ),
+        types.Tool(
+            name="algernon_upgrade",
+            description="What Algernon v2 (paid) adds — budgets, cache, {{id}} data flow, progress + background jobs — and, if you give your email, a free 14-day v2 trial key. Opt-in only.",
+            inputSchema={"type": "object", "properties": {"email": {"type": "string"}}},
         ),
         types.Tool(
             name="algernon_plan",
@@ -120,6 +150,8 @@ async def call_tool(name, arguments):
     try:
         if name == "algernon_doctor":
             out = core.describe_provider()
+        elif name == "algernon_upgrade":
+            out = _register_for_v2(a.get("email"), "algernon-mcp")
         elif name == "algernon_plan":
             tasks = await core.plan(
                 a.get("goal", ""),
