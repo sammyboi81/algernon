@@ -118,6 +118,10 @@ cheap tier (`claude-haiku-4-5` / `gpt-4o-mini`); override it with the env var
 above or per call with the tool's `model` argument. A cheap fleet is the whole
 point.
 
+> **New: the Claude Code Seatbelt.** Hooks that make Claude Code (and Cursor) ask before anything irreversible, remember the
+> project between sessions on this chain, and refuse to say "done" until the code ran. Engine: `pip install sentarion-mcp`
+> then `sentarion seatbelt install`. One-click kit with five policies and three skills: https://inboxaxe.com/mcp#seatbelt
+
 ## Install
 
 Once published to PyPI, install in one command:
