@@ -7,7 +7,7 @@ name = "algernon-mcp"
 version = "0.1.1"
 description = "Provider-agnostic fleet orchestration for AI agents: dispatch tightly-scoped parallel sub-tasks to cheap workers on your own LLM key, collect the results, and stay free to think."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
 authors = [{ name = "ZagAIrot Technologies LLC" }]
 keywords = ["mcp", "model-context-protocol", "ai-agents", "orchestration", "parallel", "fan-out", "sub-agents", "claude", "codex", "llm", "provider-agnostic", "self-contained"]
